@@ -11,13 +11,15 @@ const WIRE_SPEED = 10
 const GRAVITY = 0.35
 const PEAK_H = GH - WALL * 2 - 30
 const JUMP_VY = -Math.sqrt(2 * GRAVITY * PEAK_H)
-const PLAYER_HIT_R = 18    // 히트박스 반지름 (스프라이트보다 약간 작게)
-const INVINCIBLE_FRAMES = 120  // 충돌 후 무적 시간 (~2초 @ 60fps)
+const PLAYER_HIT_R = 18
+const INVINCIBLE_FRAMES = 120
 
+// Mission 1: 속도 70%
+const MISSION1_SPEED = 0.7
 const BUBBLE_CONFIG = {
-  large:  { r: 36, speed: 2.2 },
-  medium: { r: 22, speed: 2.8 },
-  small:  { r: 13, speed: 3.4 },
+  large:  { r: 36, speed: 2.2 * MISSION1_SPEED },
+  medium: { r: 22, speed: 2.8 * MISSION1_SPEED },
+  small:  { r: 13, speed: 3.4 * MISSION1_SPEED },
 } as const
 type BubbleSize = keyof typeof BUBBLE_CONFIG
 
@@ -26,6 +28,10 @@ const BUBBLE_COLORS: Record<BubbleSize, string> = {
   medium: '#f97316',
   small:  '#a78bfa',
 }
+
+// 카운트다운: 3→2→1 각 70프레임, GO! 50프레임
+const COUNTDOWN_FRAMES = 70
+const GO_FRAMES = 50
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Bubble {
@@ -59,31 +65,34 @@ function initialBubbles(): Bubble[] {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function GameScreen({ onBack }: { onBack: () => void }) {
-  const canvasRef   = useRef<HTMLCanvasElement>(null)
-  const keys        = useRef<Set<string>>(new Set())
-  const playerX     = useRef(GW / 2 - PLAYER_W / 2)
-  const wire        = useRef<Wire>({ x: 0, y: 0, active: false })
-  const bubblesRef  = useRef<Bubble[]>(initialBubbles())
-  const livesRef    = useRef(3)
-  const invincible  = useRef(0)
-  const overlayRef  = useRef<Overlay>('none')  // 루프 내 클로저에서 읽는 미러 값
-  const rafId       = useRef(0)
+  const canvasRef      = useRef<HTMLCanvasElement>(null)
+  const keys           = useRef<Set<string>>(new Set())
+  const playerX        = useRef(GW / 2 - PLAYER_W / 2)
+  const wire           = useRef<Wire>({ x: 0, y: 0, active: false })
+  const bubblesRef     = useRef<Bubble[]>(initialBubbles())
+  const livesRef       = useRef(3)
+  const invincible     = useRef(0)
+  const overlayRef     = useRef<Overlay>('none')
+  const countdownStep  = useRef(3)    // 3→2→1→0(GO!)→-1(playing)
+  const countdownTimer = useRef(COUNTDOWN_FRAMES)
+  const rafId          = useRef(0)
 
   const [overlay, setOverlay] = useState<Overlay>('none')
 
-  // overlayRef와 useState를 동시에 업데이트
   function showOverlay(o: Overlay) {
     overlayRef.current = o
     setOverlay(o)
   }
 
   function resetGame() {
-    playerX.current    = GW / 2 - PLAYER_W / 2
-    wire.current       = { x: 0, y: 0, active: false }
-    bubblesRef.current = initialBubbles()
-    livesRef.current   = 3
-    invincible.current = 0
-    overlayRef.current = 'none'
+    playerX.current      = GW / 2 - PLAYER_W / 2
+    wire.current         = { x: 0, y: 0, active: false }
+    bubblesRef.current   = initialBubbles()
+    livesRef.current     = 3
+    invincible.current   = 0
+    overlayRef.current   = 'none'
+    countdownStep.current  = 3
+    countdownTimer.current = COUNTDOWN_FRAMES
     setOverlay('none')
   }
 
@@ -95,7 +104,10 @@ export default function GameScreen({ onBack }: { onBack: () => void }) {
     const onKeyDown = (e: KeyboardEvent) => {
       if (['ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault()
       keys.current.add(e.key)
-      if (e.key === ' ' && !wire.current.active && overlayRef.current === 'none') {
+      // 카운트다운 중이거나 오버레이 중에는 와이어 발사 차단
+      if (e.key === ' ' && !wire.current.active
+          && overlayRef.current === 'none'
+          && countdownStep.current < 0) {
         wire.current = { x: playerX.current + PLAYER_W / 2, y: PLAYER_Y, active: true }
       }
     }
@@ -104,37 +116,42 @@ export default function GameScreen({ onBack }: { onBack: () => void }) {
     window.addEventListener('keyup', onKeyUp)
 
     const loop = () => {
-      const active = overlayRef.current === 'none'
+      const inCountdown = countdownStep.current >= 0
+      const playing     = !inCountdown && overlayRef.current === 'none'
 
-      // ── Update (overlay 없을 때만) ────────────────────────────────────────────
-      if (active) {
+      // ── 카운트다운 진행 ───────────────────────────────────────────────────────
+      if (inCountdown) {
+        countdownTimer.current--
+        if (countdownTimer.current <= 0) {
+          countdownStep.current--
+          countdownTimer.current = countdownStep.current === 0 ? GO_FRAMES : COUNTDOWN_FRAMES
+        }
+      }
 
-        // Player
+      // ── 게임 업데이트 ─────────────────────────────────────────────────────────
+      if (playing) {
         if (keys.current.has('ArrowLeft'))
           playerX.current = Math.max(WALL, playerX.current - PLAYER_SPEED)
         if (keys.current.has('ArrowRight'))
           playerX.current = Math.min(GW - WALL - PLAYER_W, playerX.current + PLAYER_SPEED)
 
-        // Wire
         const w = wire.current
         if (w.active) {
           w.y -= WIRE_SPEED
           if (w.y <= WALL) w.active = false
         }
 
-        // Bubbles
         const next: Bubble[] = []
         for (const b of bubblesRef.current) {
           b.vy += GRAVITY
           b.x  += b.vx
           b.y  += b.vy
 
-          if (b.x - b.r < WALL)        { b.x = WALL + b.r;          b.vx =  Math.abs(b.vx) }
-          if (b.x + b.r > GW - WALL)   { b.x = GW - WALL - b.r;     b.vx = -Math.abs(b.vx) }
-          if (b.y - b.r < WALL)        { b.y = WALL + b.r;           b.vy =  Math.abs(b.vy) }
-          if (b.y + b.r >= GH - WALL)  { b.y = GH - WALL - b.r;     b.vy = JUMP_VY }
+          if (b.x - b.r < WALL)       { b.x = WALL + b.r;      b.vx =  Math.abs(b.vx) }
+          if (b.x + b.r > GW - WALL)  { b.x = GW - WALL - b.r; b.vx = -Math.abs(b.vx) }
+          if (b.y - b.r < WALL)       { b.y = WALL + b.r;       b.vy =  Math.abs(b.vy) }
+          if (b.y + b.r >= GH - WALL) { b.y = GH - WALL - b.r; b.vy = JUMP_VY }
 
-          // Wire hit
           if (w.active) {
             const hit = b.x - b.r < w.x && w.x < b.x + b.r
                      && w.y > b.y - b.r && w.y < b.y + b.r
@@ -156,10 +173,8 @@ export default function GameScreen({ onBack }: { onBack: () => void }) {
         }
         bubblesRef.current = next
 
-        // 무적 카운트다운
         if (invincible.current > 0) invincible.current--
 
-        // 플레이어-방울 충돌
         if (invincible.current === 0) {
           const pcx = playerX.current + PLAYER_W / 2
           const pcy = PLAYER_Y + PLAYER_H / 2
@@ -175,7 +190,6 @@ export default function GameScreen({ onBack }: { onBack: () => void }) {
           }
         }
 
-        // Mission Clear
         if (bubblesRef.current.length === 0) showOverlay('clear')
       }
 
@@ -227,11 +241,49 @@ export default function GameScreen({ onBack }: { onBack: () => void }) {
         ctx.fill()
       }
 
-      // HUD — 목숨
+      // ── HUD ───────────────────────────────────────────────────────────────────
+      // 목숨 (좌상단)
       ctx.font = 'bold 18px sans-serif'
       ctx.fillStyle = '#ef4444'
       for (let i = 0; i < livesRef.current; i++) {
         ctx.fillText('♥', WALL + 8 + i * 26, WALL + 22)
+      }
+      // 미션명 (중앙 상단)
+      ctx.font = 'bold 13px monospace'
+      ctx.fillStyle = '#94a3b8'
+      ctx.textAlign = 'center'
+      ctx.fillText('MISSION 1', GW / 2, WALL + 20)
+      ctx.textAlign = 'left'
+      // 남은 방울 수 (우상단)
+      ctx.font = 'bold 13px monospace'
+      ctx.fillStyle = '#94a3b8'
+      ctx.textAlign = 'right'
+      ctx.fillText(`방울 ${bubblesRef.current.length}`, GW - WALL - 8, WALL + 20)
+      ctx.textAlign = 'left'
+
+      // ── 카운트다운 오버레이 ────────────────────────────────────────────────────
+      if (inCountdown) {
+        ctx.fillStyle = 'rgba(0,0,0,0.45)'
+        ctx.fillRect(WALL, WALL, GW - WALL * 2, GH - WALL * 2)
+
+        const step = countdownStep.current
+        const text = step > 0 ? String(step) : 'GO!'
+        const progress = countdownTimer.current / (step === 0 ? GO_FRAMES : COUNTDOWN_FRAMES)
+        const scale = step > 0
+          ? 1 + (1 - progress) * 0.3          // 숫자: 시간 흐를수록 작아짐
+          : 1 + progress * 0.15               // GO!: 나타날 때 약간 크게
+
+        ctx.save()
+        ctx.translate(GW / 2, GH / 2)
+        ctx.scale(scale, scale)
+        ctx.font = 'bold 110px monospace'
+        ctx.fillStyle = step > 0 ? '#facc15' : '#4ade80'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(text, 0, 0)
+        ctx.restore()
+        ctx.textAlign = 'left'
+        ctx.textBaseline = 'alphabetic'
       }
 
       rafId.current = requestAnimationFrame(loop)
