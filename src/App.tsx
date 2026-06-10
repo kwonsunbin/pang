@@ -1,9 +1,12 @@
-function App() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <h1 className="text-4xl font-bold text-gray-800">Hello World</h1>
-    </div>
-  )
-}
+import { useState } from 'react'
+import MainScreen from './screens/MainScreen'
+import GameScreen from './screens/GameScreen'
 
-export default App
+type Screen = 'main' | 'game'
+
+export default function App() {
+  const [screen, setScreen] = useState<Screen>('main')
+
+  if (screen === 'game') return <GameScreen onBack={() => setScreen('main')} />
+  return <MainScreen onStart={() => setScreen('game')} />
+}
