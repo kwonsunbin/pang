@@ -13,6 +13,16 @@
 |---|---|
 | `docs/PLAN.md` | Phase별 개발 목표를 정의한 계획 문서 |
 
+### 설계 문서 (DESIGNS)
+| 파일 | 설명 |
+|---|---|
+| `docs/DESIGNS/phase1.md` | 메인 화면 & 화면 전환 — 컴포넌트 구조, 오버레이 설계 |
+| `docs/DESIGNS/phase2.md` | 게임 필드 & 플레이어 이동 — Canvas 루프, 좌표계, 키 입력 |
+| `docs/DESIGNS/phase3.md` | 와이어 발사 — 상태 관리, 이동/소멸, 1개 제한 |
+| `docs/DESIGNS/phase4.md` | 방울 물리 & 분할 — 중력, 반사, 분할 규칙 |
+| `docs/DESIGNS/phase5.md` | 충돌 판정 & 승패 시스템 — 히트박스, 목숨, 게임 상태 전이 |
+| `docs/DESIGNS/phase6.md` | Mission 1 완성 & 마무리 — 속도 설정, HUD, 카운트다운, UX 흐름 |
+
 ### PRD
 | 파일 | 설명 |
 |---|---|
