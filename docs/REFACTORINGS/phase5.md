@@ -1,4 +1,4 @@
-# Refactoring Phase 5 — 게임 루프 훅 분리
+# Refactoring Phase 5 — 게임 루프 훅 분리 ✅ 완료
 
 ## 현재 문제
 

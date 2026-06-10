@@ -54,6 +54,7 @@
 | `docs/FEATURES/main.md` | 메인 화면 UI 구성 및 전환 조건 |
 | `docs/FEATURES/game_rule.md` | 전체 게임 룰 상세 (오브젝트, 분할 규칙, 조작키, 승패 조건) |
 | `docs/FEATURES/mission1.md` | 미션 1 — 난이도(Easy), 맵 구성, 방울 배치, 클리어 조건 |
+| `docs/FEATURES/mission2.md` | 미션 2 — 난이도(Normal), 맵 구성, 방울 배치, 클리어 조건 |
 
 ---
 

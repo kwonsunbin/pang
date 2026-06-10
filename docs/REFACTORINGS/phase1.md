@@ -1,4 +1,4 @@
-# Refactoring Phase 1 — 타입 & 상수 분리
+# Refactoring Phase 1 — 타입 & 상수 분리 ✅ 완료
 
 ## 현재 문제
 

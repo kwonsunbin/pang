@@ -1,4 +1,4 @@
-# Refactoring Phase 3 — 물리 & 충돌 로직 분리
+# Refactoring Phase 3 — 물리 & 충돌 로직 분리 ✅ 완료
 
 ## 현재 문제
 

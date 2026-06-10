@@ -1,4 +1,4 @@
-# Refactoring Phase 2 — 방울 팩토리 & 초기 상태 분리
+# Refactoring Phase 2 — 방울 팩토리 & 초기 상태 분리 ✅ 완료
 
 ## 현재 문제
 
