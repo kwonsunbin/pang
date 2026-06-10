@@ -8,10 +8,15 @@
 
 ## 주요 문서 목록
 
+### 실행 가이드
+| 파일 | 설명 |
+|---|---|
+| `README.md` | 로컬 실행 방법, 조작법, 기술 스택 요약 |
+
 ### 개발 계획 (PLAN)
 | 파일 | 설명 |
 |---|---|
-| `docs/PLAN.md` | Phase별 개발 목표를 정의한 계획 문서 |
+| `docs/PLAN.md` | Phase별 개발 목표 및 완료 현황 (Phase 1~6 전체 완료) |
 
 ### 아키텍처
 | 파일 | 설명 |
@@ -57,7 +62,7 @@
 - **의존성 설치:** `npm install`
 - **로컬 서버 실행:** `npm run dev`
 - **프로젝트 빌드:** `npm run build`
-- **틴팅 및 검사 (선택):** `npm run lint`
+- **린팅 및 검사 (선택):** `npm run lint`
 
 ## 코드 작성 지침 (Code Style & Guidelines)
 - **언어 및 컴포넌트:** 모든 컴포넌트는 TypeScript(`.tsx`)로 작성하며, 함수형 컴포넌트와 Hooks를 사용합니다.

@@ -26,10 +26,11 @@ pang/
 ├── docs/
 │   ├── PRD.md                # 제품 요구사항 정의서
 │   ├── PLAN.md               # Phase별 개발 계획
+│   ├── ARCHITECTURE.md       # 이 문서 — 전체 아키텍처 개요
 │   ├── FEATURES/             # 화면별 기능 명세
-│   └── DESIGNS/              # Phase별 설계 문서
+│   └── DESIGNS/              # Phase별 설계 문서 (phase1~6.md)
 ├── CLUADE.md                 # AI 작업 가이드 및 문서 인덱스
-└── README.md
+└── README.md                 # 로컬 실행 가이드
 ```
 
 ---
@@ -58,9 +59,11 @@ useEffect()
   ├── addEventListener (keydown / keyup)
   └── requestAnimationFrame(loop)
         loop():
-          1. 입력 읽기   — keys (Set<string>)
-          2. 상태 갱신   — playerX, wire, bubbles, lives …
-          3. Canvas 렌더 — ctx.clearRect → 배경 → 벽 → 오브젝트
+          1. 상태 분기
+             ├── inCountdown (countdownStep >= 0) → 카운트다운 진행, 입력 차단
+             ├── playing     (overlay === 'none')  → 물리/충돌/승패 업데이트
+             └── overlay     (gameover | clear)    → 업데이트 중단, Canvas만 렌더
+          2. Canvas 렌더 — 배경 → 벽 → 와이어 → 방울 → 플레이어 → HUD → 카운트다운
           └── requestAnimationFrame(loop)  [재귀]
 cleanup: cancelAnimationFrame + removeEventListener
 ```
@@ -77,8 +80,19 @@ cleanup: cancelAnimationFrame + removeEventListener
 매 프레임 루프에서 직접 읽고 쓸 수 있어 클로저 문제도 없다.
 
 ```
-useRef 관리 값  →  게임 루프 내에서만 읽고 씀  (Canvas 출력)
-useState 관리 값 →  결과 화면 표시 등 React DOM이 반응해야 할 때만 사용
+useRef 관리 값   →  게임 루프 내에서만 읽고 씀  (Canvas 출력)
+useState 관리 값 →  결과 오버레이 표시 등 React DOM이 반응해야 할 때만 사용
+```
+
+`overlay` 상태처럼 루프와 React DOM 양쪽에서 필요한 값은 **ref + state를 동시에 관리**한다.
+루프 내 클로저에서 stale closure 없이 읽기 위해 `overlayRef`(ref)를 사용하고,
+오버레이 컴포넌트 렌더를 트리거하기 위해 `setOverlay`(state setter)를 함께 호출한다.
+
+```ts
+function showOverlay(o: Overlay) {
+  overlayRef.current = o   // 루프에서 읽는 값
+  setOverlay(o)            // React 리렌더 트리거
+}
 ```
 
 ---
@@ -154,9 +168,10 @@ keyup   → keys.delete(e.key)
 ## 문서 체계
 
 ```
-PRD.md          "무엇을 만드는가"  — 요구사항 기준
-PLAN.md         "언제 무엇을"      — Phase별 목표 및 고객 검수 포인트
-FEATURES/*.md   "어떻게 동작하는가" — 화면/기능 명세
-DESIGNS/*.md    "어떻게 구현하는가" — 설계 결정 및 데이터 구조
-ARCHITECTURE.md "전체 구조"        — 이 문서
+README.md        "어떻게 실행하는가" — 로컬 실행 가이드
+PRD.md           "무엇을 만드는가"  — 요구사항 기준
+PLAN.md          "언제 무엇을"      — Phase별 목표 및 완료 현황
+FEATURES/*.md    "어떻게 동작하는가" — 화면/기능 명세
+DESIGNS/*.md     "어떻게 구현하는가" — 설계 결정 및 데이터 구조
+ARCHITECTURE.md  "전체 구조"        — 이 문서
 ```
