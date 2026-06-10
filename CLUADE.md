@@ -23,6 +23,16 @@
 |---|---|
 | `docs/ARCHITECTURE.md` | 전체 아키텍처 — 기술 스택, 디렉토리 구조, 게임 루프, 물리 모델 |
 
+### 리팩토링 계획 (REFACTORINGS)
+| 파일 | 설명 |
+|---|---|
+| `docs/REFACTORINGS/phase1.md` | 타입 & 상수 분리 — `constants.ts` / `types.ts` |
+| `docs/REFACTORINGS/phase2.md` | 방울 팩토리 분리 — `bubbles.ts`, 전역 ID 문제 해결 |
+| `docs/REFACTORINGS/phase3.md` | 물리 & 충돌 분리 — `physics.ts` 순수 함수화 |
+| `docs/REFACTORINGS/phase4.md` | 렌더러 분리 — `renderer.ts`, 루프에서 draw 코드 제거 |
+| `docs/REFACTORINGS/phase5.md` | 게임 루프 훅 분리 — `useGameLoop.ts`, GameScreen 30줄로 압축 |
+| `docs/REFACTORINGS/phase6.md` | 미션 시스템 일반화 — `missions/` 디렉토리, 파일 1개로 미션 추가 |
+
 ### 설계 문서 (DESIGNS)
 | 파일 | 설명 |
 |---|---|
